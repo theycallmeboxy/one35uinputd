@@ -1,0 +1,14 @@
+# compiled daemon binary
+daemon/one35uinputd
+
+# binary staged into module (copied by make)
+module/one35uinputd
+
+# release zip — upload as a GitHub Release asset, not tracked in git
+*.zip
+
+# scratch / dev files
+test.json
+
+# claude project settings
+.claude/
