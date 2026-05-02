@@ -615,7 +615,7 @@ static act_type_t parse_act_type(const char *s) {
 static input_func_t parse_input_func(const char *s) {
     if (!s)                           return INPUT_FUNC_NONE;
     if (!strcmp(s, "left_dpad"))      return INPUT_FUNC_LEFT_DPAD;
-    if (!strcmp(s, "right_dpad"))     return INPUT_FUNC_RIGHT_DPAD;
+    if (!strcmp(s, "dpad"))           return INPUT_FUNC_RIGHT_DPAD;
     if (!strcmp(s, "left_joystick"))  return INPUT_FUNC_LEFT_JOY;
     if (!strcmp(s, "right_joystick")) return INPUT_FUNC_RIGHT_JOY;
     if (!strcmp(s, "mouse"))          return INPUT_FUNC_MOUSE;

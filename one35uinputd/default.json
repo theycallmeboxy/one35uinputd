@@ -45,7 +45,7 @@
       },
       "portrait": {
         "left_dpad":     { "function": "none" },
-        "right_dpad":    { "function": "dpad" },
+        "right_dpad":    { "function": "right_dpad" },
         "left_joystick": { "function": "none" },
         "controller_buttons": {
           "binds": [
@@ -94,7 +94,6 @@
         },
         "system_buttons": {
           "binds": [
-            { "src": 158, "tap": { "type": "android_key", "code": 158 } },
             { "src": 114, "tap": { "type": "android_key", "code": 114 } },
             { "src": 115, "tap": { "type": "android_key", "code": 115 } },
             { "src": 116, "tap": { "type": "android_key", "code": 116 } }
@@ -117,7 +116,6 @@
         },
         "system_buttons": {
           "binds": [
-            { "src": 158, "tap": { "type": "android_key", "code": 158 } },
             { "src": 114, "tap": { "type": "android_key", "code": 114 } },
             { "src": 115, "tap": { "type": "android_key", "code": 115 } },
             { "src": 116, "tap": { "type": "android_key", "code": 116 } }

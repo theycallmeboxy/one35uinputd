@@ -135,7 +135,7 @@ into the same bind lookup table. The split exists for readability in complex con
 | `function`       | Output                                          |
 |------------------|-------------------------------------------------|
 | `left_dpad`      | ABS_HAT0X/Y — standard gamepad d-pad HAT axis  |
-| `right_dpad`     | KEY_UP / KEY_DOWN / KEY_LEFT / KEY_RIGHT        |
+| `dpad`           | KEY_UP / KEY_DOWN / KEY_LEFT / KEY_RIGHT        |
 | `left_joystick`  | ABS_X/Y at ±32767 (digital, per direction)      |
 | `right_joystick` | ABS_Z/ABS_RZ at ±32767 (digital, per direction) |
 | `mouse`          | Drives virtual mouse cursor at full speed per direction (digital) |
@@ -172,7 +172,7 @@ Any action type except `layer_lt` is valid for d-pad directions.
 | `left_joystick`  | ABS_X/Y — left stick pass-through                            |
 | `right_joystick` | ABS_Z/ABS_RZ — right stick (Xbox axis convention)            |
 | `left_dpad`      | ABS_HAT0X/Y — analog-to-digital, 50% threshold               |
-| `right_dpad`     | KEY_UP / KEY_DOWN / KEY_LEFT / KEY_RIGHT — analog-to-digital  |
+| `dpad`           | KEY_UP / KEY_DOWN / KEY_LEFT / KEY_RIGHT — analog-to-digital  |
 | `mouse`          | Drives virtual mouse cursor (analog, uses mouse speed/accel settings) |
 | `none`           | Joystick output suppressed                                    |
 
@@ -519,7 +519,7 @@ All buttons mapped 1:1. Right d-pad acts as right joystick in landscape, right d
       },
       "portrait": {
         "left_dpad":     { "function": "none" },
-        "right_dpad":    { "function": "right_dpad" },
+        "right_dpad":    { "function": "dpad" },
         "left_joystick": { "function": "none" },
         "controller_buttons": {
           "binds": [
@@ -604,7 +604,7 @@ Mouse uses faster speed and acceleration for comfort.
       },
       "portrait": {
         "left_dpad":     { "function": "none" },
-        "right_dpad":    { "function": "right_dpad" },
+        "right_dpad":    { "function": "dpad" },
         "left_joystick": { "function": "none" },
         "controller_buttons": {
           "binds": [
