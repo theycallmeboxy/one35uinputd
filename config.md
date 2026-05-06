@@ -92,6 +92,12 @@ Layers are **opaque**: if a key has no bind in the currently active layer, the e
 dropped. It does not fall through to layer 0. Every key you want to work in a non-zero
 layer must be explicitly bound in that layer.
 
+### Layer interaction rules
+
+- **TG while on a TG layer** — there is no stack. `layer_tg` sets a single toggled-layer value. Toggling to layer 2 while on layer 1 replaces the toggle; layer 1 is abandoned. Toggling layer 2 again returns to layer 0, not layer 1.
+- **LT while on a TG layer** — works as expected. The momentary layer takes priority while the LT key is held, then drops back to the active TG layer on release.
+- **LT while already holding an LT key** — the second LT key does not nest. It is dispatched as a normal tap in the current momentary layer (if bound there). Only one LT key can be active at a time.
+
 Each layer object has a `landscape` and a `portrait` layout. The daemon automatically
 selects the correct layout based on Android's `user_rotation` system setting, which is
 monitored via inotify and updated in real time.
@@ -128,9 +134,7 @@ into the same bind lookup table. The split exists for readability in complex con
 
 ### D-pad (`left_dpad`, `right_dpad`)
 
-```json
-{ "function": "left_dpad" }
-```
+`left_dpad` and `dpad` both produce directional output but use different protocols — `left_dpad` emits HAT axis events (standard for gamepad d-pads), `dpad` emits digital key events. Use `left_dpad` when targeting games that read ABS_HAT0X/Y; use `dpad` for UI navigation or apps that expect arrow keys.
 
 | `function`       | Output                                          |
 |------------------|-------------------------------------------------|
@@ -480,7 +484,7 @@ Full reference: [linux/input-event-codes.h](https://github.com/torvalds/linux/bl
 
 ### Minimal — single layer, pass-through gamepad
 
-All buttons mapped 1:1. Right d-pad acts as right joystick in landscape, right d-pad in portrait.
+All buttons mapped 1:1. Right d-pad acts as right joystick in landscape, digital d-pad keys in portrait.
 
 ```json
 {
@@ -556,7 +560,7 @@ All buttons mapped 1:1. Right d-pad acts as right joystick in landscape, right d
 ### Two layers — gamepad + mouse mode via LT hold
 
 Layer 0 = standard gamepad. Layer 1 = mouse mode.
-Holding START activates layer 1; tapping START sends BTN_START normally.
+Tapping START sends BTN_START normally. Pressing any other button while START is held activates layer 1.
 Mouse uses faster speed and acceleration for comfort.
 
 ```json
