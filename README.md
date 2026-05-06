@@ -2,6 +2,8 @@
 
 A Magisk daemon for the **MagicX One35** (MT6768) that intercepts the built-in controller and re-emits it as a virtual gamepad, mouse, and keyboard. Supports QMK-style layer switching, LT (layer-tap) keys, auto-orientation, and haptic feedback.
 
+*DISCLAIMER: This was made with Claude.  Do with that what you will.*
+
 ## Features
 
 - Up to 5 independent layers with per-layer landscape and portrait layouts
