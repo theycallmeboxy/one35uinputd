@@ -24,3 +24,13 @@ local.properties
 captures/
 .externalNativeBuild/
 .cxx/
+
+# Android signing keys — never commit
+*.jks
+*.keystore
+
+# editor
+.vscode/
+
+# macOS
+.DS_Store
