@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base window theme applied before Compose takes over; the real UI theme lives in
+         ui/theme/Theme.kt (Material 3). This just avoids a flash of the platform default. -->
+    <style name="Theme.One35Config" parent="android:Theme.Material.NoActionBar" />
+</resources>

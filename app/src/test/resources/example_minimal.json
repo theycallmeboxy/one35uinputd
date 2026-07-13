@@ -1,0 +1,66 @@
+{
+  "global": {
+    "lt_hold_ms": 390
+  },
+  "layers": [
+    {
+      "landscape": {
+        "left_dpad":     { "function": "left_dpad" },
+        "right_dpad":    { "function": "right_joystick" },
+        "left_joystick": { "function": "left_joystick" },
+        "controller_buttons": {
+          "binds": [
+            { "src": 304, "tap": { "type": "gamepad_key", "code": 304 } },
+            { "src": 305, "tap": { "type": "gamepad_key", "code": 305 } },
+            { "src": 307, "tap": { "type": "gamepad_key", "code": 307 } },
+            { "src": 308, "tap": { "type": "gamepad_key", "code": 308 } },
+            { "src": 310, "tap": { "type": "gamepad_key", "code": 310 } },
+            { "src": 311, "tap": { "type": "gamepad_key", "code": 311 } },
+            { "src": 312, "tap": { "type": "gamepad_key", "code": 312 } },
+            { "src": 313, "tap": { "type": "gamepad_key", "code": 313 } },
+            { "src": 314, "tap": { "type": "gamepad_key", "code": 314 } },
+            { "src": 315, "tap": { "type": "gamepad_key", "code": 315 } },
+            { "src": 317, "tap": { "type": "gamepad_key", "code": 317 } }
+          ]
+        },
+        "system_buttons": {
+          "binds": [
+            { "src": 158, "tap": { "type": "android_key", "code": 158 } },
+            { "src": 114, "tap": { "type": "android_key", "code": 114 } },
+            { "src": 115, "tap": { "type": "android_key", "code": 115 } },
+            { "src": 116, "tap": { "type": "android_key", "code": 116 } }
+          ]
+        }
+      },
+      "portrait": {
+        "left_dpad":     { "function": "none" },
+        "right_dpad":    { "function": "dpad" },
+        "left_joystick": { "function": "none" },
+        "controller_buttons": {
+          "binds": [
+            { "src": 307, "tap": { "type": "gamepad_key", "code": 304 } },
+            { "src": 304, "tap": { "type": "gamepad_key", "code": 305 } },
+            { "src": 305, "tap": { "type": "gamepad_key", "code": 308 } },
+            { "src": 308, "tap": { "type": "gamepad_key", "code": 307 } },
+            { "src": 309, "tap": { "type": "gamepad_key", "code": 310 } },
+            { "src": 306, "tap": { "type": "gamepad_key", "code": 311 } },
+            { "src": 314, "tap": { "type": "gamepad_key", "code": 314 } },
+            { "src": 315, "tap": { "type": "gamepad_key", "code": 315 } },
+            { "src": 310, "tap": { "type": "none" } },
+            { "src": 311, "tap": { "type": "none" } },
+            { "src": 312, "tap": { "type": "none" } },
+            { "src": 313, "tap": { "type": "none" } }
+          ]
+        },
+        "system_buttons": {
+          "binds": [
+            { "src": 158, "tap": { "type": "android_key", "code": 158 } },
+            { "src": 114, "tap": { "type": "android_key", "code": 114 } },
+            { "src": 115, "tap": { "type": "android_key", "code": 115 } },
+            { "src": 116, "tap": { "type": "android_key", "code": 116 } }
+          ]
+        }
+      }
+    }
+  ]
+}

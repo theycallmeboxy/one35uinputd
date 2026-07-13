@@ -72,6 +72,9 @@ static char g_log_path[256];
 /* ── timing defaults ─────────────────────────────────────────────────────── */
 #define DEFAULT_LT_HOLD_MS  390
 #define DEFAULT_HAPTICS_MS  0
+/* Cap how long an emitted KEY_BACK is held down. The OS turns a long BACK hold into HOME;
+ * auto-releasing BACK before that threshold prevents it. 0 disables (pass-through). */
+#define DEFAULT_BACK_HOLD_CAP_MS 300
 #define MOUSE_HZ              100
 #define MOUSE_POLL_MS         (1000 / MOUSE_HZ)
 
@@ -165,6 +168,7 @@ typedef struct {
     int     mouse_accel_pct;
     int     mouse_accel_zone_pct;
     int     haptics_ms;
+    int     back_hold_cap_ms;
 } config_t;
 
 /* ── LT state ────────────────────────────────────────────────────────────── */
@@ -182,6 +186,11 @@ static int             g_lt_src   = -1;
 static int             g_lt_layer = -1;
 static action_t        g_lt_tap;
 static struct timespec g_lt_down_ts;
+
+/* KEY_BACK hold-cap state: BACK is auto-released after back_hold_cap_ms so the OS never
+ * sees a hold long enough to convert it into HOME. */
+static int             g_back_held = 0;
+static struct timespec g_back_down_ts;
 
 static pid_t g_pid      = 0;
 static int g_fd_src     = -1;
@@ -390,8 +399,24 @@ static void dispatch_action(const action_t *act, int value) {
         break;
 
     case ACT_ANDROID_KEY:
-        uinput_emit(g_fd_kbd, EV_KEY, act->code, value);
-        uinput_sync(g_fd_kbd);
+        if (act->code == KEY_BACK && g_cfg.back_hold_cap_ms > 0) {
+            /* Emit BACK down immediately, but cap how long it stays down (auto-released
+             * from the main loop) so the OS can't promote a long hold to HOME. */
+            if (value) {
+                uinput_emit(g_fd_kbd, EV_KEY, KEY_BACK, 1);
+                uinput_sync(g_fd_kbd);
+                g_back_held = 1;
+                clock_gettime(CLOCK_MONOTONIC, &g_back_down_ts);
+            } else if (g_back_held) {
+                uinput_emit(g_fd_kbd, EV_KEY, KEY_BACK, 0);
+                uinput_sync(g_fd_kbd);
+                g_back_held = 0;
+            }
+            /* else: physical release after an auto-release — suppress the stale up event */
+        } else {
+            uinput_emit(g_fd_kbd, EV_KEY, act->code, value);
+            uinput_sync(g_fd_kbd);
+        }
         break;
 
     case ACT_GAMEPAD_AXIS:
@@ -529,6 +554,7 @@ static void load_default_config(config_t *cfg) {
     cfg->mouse_accel_pct     = 100;
     cfg->mouse_accel_zone_pct = 20;
     cfg->haptics_ms           = DEFAULT_HAPTICS_MS;
+    cfg->back_hold_cap_ms     = DEFAULT_BACK_HOLD_CAP_MS;
 
     layer_t *l0 = &cfg->layers[0];
 
@@ -713,6 +739,8 @@ static void load_config(config_t *cfg) {
         if (cJSON_IsNumber(j)) cfg->lt_hold_ms  = (int)j->valuedouble;
         j = cJSON_GetObjectItem(global, "haptics_ms");
         if (cJSON_IsNumber(j)) cfg->haptics_ms  = (int)j->valuedouble;
+        j = cJSON_GetObjectItem(global, "back_hold_cap_ms");
+        if (cJSON_IsNumber(j)) cfg->back_hold_cap_ms = (int)j->valuedouble;
         cJSON *mouse = cJSON_GetObjectItem(global, "mouse");
         if (cJSON_IsObject(mouse)) {
             j = cJSON_GetObjectItem(mouse, "dead_zone_pct");
@@ -1199,6 +1227,11 @@ int main(int argc, char **argv) {
             memset(g_dpad_mouse_held, 0, sizeof(g_dpad_mouse_held));
             g_dpad_mouse_x = g_dpad_mouse_y = 0;
             g_joy_dpad_x   = g_joy_dpad_y   = 0;
+            if (g_back_held) {
+                uinput_emit(g_fd_kbd, EV_KEY, KEY_BACK, 0);
+                uinput_sync(g_fd_kbd);
+                g_back_held = 0;
+            }
             write_state();
             fprintf(stderr, "one35uinputd: config reloaded\n");
         }
@@ -1219,6 +1252,20 @@ int main(int argc, char **argv) {
         if (g_lt_state == LT_PENDING) {
             long until = g_cfg.lt_hold_ms - lt_held;
             timeout_ms = (int)(until > 0 ? until : 0);
+        }
+
+        /* Auto-release a held BACK once it reaches the cap, so the OS never sees a hold
+         * long enough to convert into HOME. Wake the poll at the cap deadline. */
+        if (g_back_held && g_cfg.back_hold_cap_ms > 0) {
+            long back_ms = ms_since(&g_back_down_ts);
+            if (back_ms >= g_cfg.back_hold_cap_ms) {
+                uinput_emit(g_fd_kbd, EV_KEY, KEY_BACK, 0);
+                uinput_sync(g_fd_kbd);
+                g_back_held = 0;
+            } else {
+                long until = g_cfg.back_hold_cap_ms - back_ms;
+                if (timeout_ms < 0 || until < timeout_ms) timeout_ms = (int)until;
+            }
         }
 
         {

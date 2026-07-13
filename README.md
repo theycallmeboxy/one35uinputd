@@ -58,7 +58,14 @@ make clean
 
 ## Configuration
 
-See [config.md](config.md) for the full configuration reference including layer system, action types, bind format, and example configs.
+The recommended way to configure the daemon is the **One35 Config app** (`app/`) — a
+standalone Android app that edits the config through a UI and applies changes live, with no
+JSON hand-editing. See [app/README.md](app/README.md).
+
+The underlying JSON format is still documented in [config.md](config.md) as the schema
+reference (layer system, action types, bind format, example configs). Dropping a
+`one35uinputd.json` on `/sdcard` and tapping the Magisk action button remains a working
+fallback.
 
 ## License
 

@@ -12,3 +12,15 @@ test.json
 
 # claude project settings
 .claude/
+
+# Android / Gradle build artifacts
+.gradle/
+.kotlin/
+build/
+app/build/
+local.properties
+*.iml
+.idea/
+captures/
+.externalNativeBuild/
+.cxx/
