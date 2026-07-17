@@ -169,6 +169,7 @@ typedef struct {
     int     mouse_accel_zone_pct;
     int     haptics_ms;
     int     back_hold_cap_ms;
+    int     brightness_step;
 } config_t;
 
 /* ── LT state ────────────────────────────────────────────────────────────── */
@@ -254,6 +255,7 @@ static int uinput_setup_gamepad(void) {
         BTN_TL, BTN_TR, BTN_TL2, BTN_TR2,
         BTN_SELECT, BTN_START, BTN_MODE,
         BTN_THUMBL, BTN_THUMBR,
+        KEY_BACK,
         KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT,
         -1
     };
@@ -345,6 +347,7 @@ static int uinput_setup_keyboard(void) {
     int keys[] = {
         KEY_BACK, 172 /* KEY_HOMEPAGE */, KEY_HOME,
         KEY_VOLUMEUP, KEY_VOLUMEDOWN, KEY_POWER,
+        KEY_BRIGHTNESSUP, KEY_BRIGHTNESSDOWN,
         KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT,
         KEY_APPSWITCH, KEY_APPSELECT,
         -1
@@ -386,6 +389,7 @@ static const bind_t *find_bind(int src_code) {
 /* ── forward declarations ────────────────────────────────────────────────── */
 static void trigger_haptic(void);
 static void exec_orient(int portrait);
+static void adjust_brightness(int up);
 static void write_state(void);
 
 /* ── action dispatch ─────────────────────────────────────────────────────── */
@@ -399,20 +403,33 @@ static void dispatch_action(const action_t *act, int value) {
         break;
 
     case ACT_ANDROID_KEY:
+        /* Brightness keys: use settings-based linear stepping (avoids
+         * Android's baked-in non-linear curve on MT6768 firmware). */
+        if ((act->code == KEY_BRIGHTNESSUP || act->code == KEY_BRIGHTNESSDOWN)
+            && value == 1 && g_cfg.brightness_step > 0) {
+            adjust_brightness(act->code == KEY_BRIGHTNESSUP);
+            break;
+        }
         if (act->code == KEY_BACK && g_cfg.back_hold_cap_ms > 0) {
-            /* Emit BACK down immediately, but cap how long it stays down (auto-released
-             * from the main loop) so the OS can't promote a long hold to HOME. */
             if (value) {
                 uinput_emit(g_fd_kbd, EV_KEY, KEY_BACK, 1);
                 uinput_sync(g_fd_kbd);
+                uinput_emit(g_fd_pad, EV_KEY, KEY_BACK, 1);
+                uinput_sync(g_fd_pad);
                 g_back_held = 1;
                 clock_gettime(CLOCK_MONOTONIC, &g_back_down_ts);
             } else if (g_back_held) {
                 uinput_emit(g_fd_kbd, EV_KEY, KEY_BACK, 0);
                 uinput_sync(g_fd_kbd);
+                uinput_emit(g_fd_pad, EV_KEY, KEY_BACK, 0);
+                uinput_sync(g_fd_pad);
                 g_back_held = 0;
             }
-            /* else: physical release after an auto-release — suppress the stale up event */
+        } else if (act->code == KEY_BACK) {
+            uinput_emit(g_fd_kbd, EV_KEY, KEY_BACK, value);
+            uinput_sync(g_fd_kbd);
+            uinput_emit(g_fd_pad, EV_KEY, KEY_BACK, value);
+            uinput_sync(g_fd_pad);
         } else {
             uinput_emit(g_fd_kbd, EV_KEY, act->code, value);
             uinput_sync(g_fd_kbd);
@@ -555,6 +572,7 @@ static void load_default_config(config_t *cfg) {
     cfg->mouse_accel_zone_pct = 20;
     cfg->haptics_ms           = DEFAULT_HAPTICS_MS;
     cfg->back_hold_cap_ms     = DEFAULT_BACK_HOLD_CAP_MS;
+    cfg->brightness_step      = 16;
 
     layer_t *l0 = &cfg->layers[0];
 
@@ -741,6 +759,8 @@ static void load_config(config_t *cfg) {
         if (cJSON_IsNumber(j)) cfg->haptics_ms  = (int)j->valuedouble;
         j = cJSON_GetObjectItem(global, "back_hold_cap_ms");
         if (cJSON_IsNumber(j)) cfg->back_hold_cap_ms = (int)j->valuedouble;
+        j = cJSON_GetObjectItem(global, "brightness_step");
+        if (cJSON_IsNumber(j)) cfg->brightness_step  = (int)j->valuedouble;
         cJSON *mouse = cJSON_GetObjectItem(global, "mouse");
         if (cJSON_IsObject(mouse)) {
             j = cJSON_GetObjectItem(mouse, "dead_zone_pct");
@@ -1147,6 +1167,54 @@ static void trigger_haptic(void) {
     }
 }
 
+/* ── brightness: direct settings read/write for linear stepping ───────────── */
+/* Reads screen_brightness via `settings get`, applies step, writes back.
+ * Uses pipe+double-fork pattern (subprocess finishes in ~10ms). Zero ongoing
+ * CPU cost — no polling, no state, no main-loop burden. */
+static void adjust_brightness(int up) {
+    int cur = -1;
+    int pipefd[2];
+    if (pipe(pipefd) == 0) {
+        pid_t p = fork();
+        if (p == 0) {
+            close(pipefd[0]);
+            dup2(pipefd[1], STDOUT_FILENO);
+            close(pipefd[1]);
+            execl("/system/bin/settings", "settings", "get", "system",
+                  "screen_brightness", NULL);
+            _exit(1);
+        }
+        close(pipefd[1]);
+        char buf[16] = {0};
+        ssize_t r = read(pipefd[0], buf, sizeof(buf) - 1);
+        close(pipefd[0]);
+        waitpid(p, NULL, 0);
+        if (r > 0) {
+            cur = (int)strtol(buf, NULL, 10);
+        }
+    }
+    if (cur < 1 || cur > 255) return;
+
+    int step  = g_cfg.brightness_step;
+    int target = up ? cur + step : cur - step;
+    if (target > 255) target = 255;
+    if (target < 1)   target = 1;
+
+    char val[16];
+    snprintf(val, sizeof(val), "%d", target);
+    pid_t pid = fork();
+    if (pid == 0) {
+        setsid();
+        if (fork() == 0) {
+            execl("/system/bin/settings", "settings", "put", "system",
+                  "screen_brightness", val, NULL);
+            _exit(1);
+        }
+        _exit(0);
+    }
+    if (pid > 0) waitpid(pid, NULL, 0);
+}
+
 /* double-fork so grandchild is reparented to init — no zombie accumulation */
 static void exec_orient(int portrait) {
     const char *val = portrait ? "3" : "0";
@@ -1230,6 +1298,8 @@ int main(int argc, char **argv) {
             if (g_back_held) {
                 uinput_emit(g_fd_kbd, EV_KEY, KEY_BACK, 0);
                 uinput_sync(g_fd_kbd);
+                uinput_emit(g_fd_pad, EV_KEY, KEY_BACK, 0);
+                uinput_sync(g_fd_pad);
                 g_back_held = 0;
             }
             write_state();

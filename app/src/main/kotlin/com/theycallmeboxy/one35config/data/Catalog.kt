@@ -103,6 +103,7 @@ object Catalog {
         Labeled(108, "D-pad Down"), Labeled(114, "Volume Down"), Labeled(115, "Volume Up"),
         Labeled(116, "Power"), Labeled(158, "Back"), Labeled(172, "Home"),
         Labeled(580, "Recent apps"),
+        Labeled(224, "Brightness Down"), Labeled(225, "Brightness Up"),
     )
 
     // ── Axis codes (for gamepad_axis) ─────────────────────────────────────────

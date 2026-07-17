@@ -67,6 +67,7 @@ array of layer objects — index 0 is the base layer, always active unless overr
 | `lt_hold_ms` | int  | 390     | Hold threshold for LT keys (milliseconds). Released before this time with no other key pressed: tap fires. Another key pressed while held (before or after the threshold): layer activates immediately. Held past the threshold and released with no other key pressed: nothing happens. |
 | `haptics_ms` | int  | 0       | Vibration duration (milliseconds) on layer change events: LT hold activation, TG toggles, and `orient_tg`. Set to 0 to disable. |
 | `back_hold_cap_ms` | int | 300 | Maximum time (milliseconds) an emitted `KEY_BACK` is held down before the daemon auto-releases it. The One35 OS converts a long BACK hold into HOME; because that promotion can't be blocked directly, capping the emitted hold below the OS threshold prevents it. BACK still fires immediately on press — only the *held* duration is capped, so holding BACK never reaches the HOME threshold. Set to 0 to disable (pass the physical hold through unchanged). Applies to any bind whose output is `android_key` code 158. |
+| `brightness_step` | int | 16 | Raw brightness increment per press of brightness keys (code 224/225). Bypasses Android's firmware brightness curve for consistent linear stepping. A value of 16 gives 16 equal steps across the full 0–255 range. Set to 0 to fall back to standard Android key event behavior. |
 
 ### Mouse settings
 
@@ -478,6 +479,8 @@ Full reference: [linux/input-event-codes.h](https://github.com/torvalds/linux/bl
 | 116  | KEY_POWER      | KEYCODE_POWER         |
 | 158  | KEY_BACK       | KEYCODE_BACK          |
 | 172  | KEY_HOMEPAGE   | KEYCODE_HOME          |
+| 224  | KEY_BRIGHTNESSDOWN | KEYCODE_BRIGHTNESS_DOWN |
+| 225  | KEY_BRIGHTNESSUP   | KEYCODE_BRIGHTNESS_UP   |
 | 580  | KEY_APPSELECT  | KEYCODE_APP_SWITCH (recent apps) |
 
 ---
